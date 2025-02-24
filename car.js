@@ -4,15 +4,44 @@ class Car {
         this.acceleration = 0.2;
         this.maxSpeed = 3;
         this.friction = 0.05;
+        this.damaged = false;
 
         this.sensor = new Sensor(this);
         this.controls = new Controls();
     }
 
     update(roadBorders) {
-        this.#moveCar();
+        if(!this.damaged) {
+            this.#moveCar();
+            this.polygon = this.#createPolygon();
+            this.damaged=this.#assessDamage(roadBorders);
+        }   
         this.sensor.update(roadBorders);
     }
+
+    #assessDamage(roadBorders) {
+        return roadBorders.some(border => polysIntersect(this.polygon, border));
+    }
+
+    #createPolygon() {
+        const points = [];
+        const rad = Math.hypot(this.width, this.height) / 2;
+        const alpha = Math.atan2(this.width, this.height);
+        const angles = [this.angle - alpha, 
+                        this.angle + alpha, 
+                        Math.PI + this.angle - alpha, 
+                        Math.PI + this.angle + alpha];
+    
+        for (const angle of angles) {
+            points.push({
+                x: this.x - Math.sin(angle) * rad,
+                y: this.y - Math.cos(angle) * rad 
+            });
+        }
+    
+        return points;
+    }
+    
 
     #moveCar() {
         const { forward, reverse, left, right } = this.controls;
@@ -34,13 +63,13 @@ class Car {
     }
 
     draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(-this.angle);
-        
-        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-        
-        ctx.restore();
+        ctx.fillStyle = this.damaged ? "gray" : "black";
+
+        ctx.beginPath();
+        this.polygon.forEach((point, index) => {
+            index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y);
+        });
+        ctx.fill();
 
         this.sensor.draw(ctx);
     }

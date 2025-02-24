@@ -5,31 +5,8 @@ class Controls {
         this.right = false;
         this.reverse = false;
 
-        switch(type){
-            case "KEYS":
-                this.#addKeyboardListeners();
-                break;
-            case "DUMMY":
-                this.forward=true;
-                break;
+        if (type === "DUMMY") {
+            this.forward = true;
         }
-    }
-
-    #addKeyboardListeners() {
-        const keyMap = {
-            ArrowUp: 'forward',
-            ArrowLeft: 'left',
-            ArrowRight: 'right',
-            ArrowDown: 'reverse'
-        };
-    
-        const updateKeyState = (event, state) => {
-            if (keyMap.hasOwnProperty(event.key)) {
-                this[keyMap[event.key]] = state;
-            }
-        };
-    
-        document.onkeydown = (event) => updateKeyState(event, true);
-        document.onkeyup = (event) => updateKeyState(event, false);
     }
 }

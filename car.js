@@ -1,26 +1,33 @@
 class Car {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height, controlType, maxSpeed = 3) {
         Object.assign(this, { x, y, width, height, speed: 0, angle: 0 });
         this.acceleration = 0.2;
-        this.maxSpeed = 3;
+        this.maxSpeed = maxSpeed;
         this.friction = 0.05;
         this.damaged = false;
 
-        this.sensor = new Sensor(this);
-        this.controls = new Controls();
+        if(controlType == "KEYS") {
+            this.sensor = new Sensor(this);
+        }
+        
+        this.controls = new Controls(controlType);
     }
 
-    update(roadBorders) {
+    update(roadBorders, traffic) {
         if(!this.damaged) {
             this.#moveCar();
             this.polygon = this.#createPolygon();
-            this.damaged=this.#assessDamage(roadBorders);
+            this.damaged=this.#assessDamage(roadBorders, traffic);
         }   
-        this.sensor.update(roadBorders);
+
+        this.sensor?.update(roadBorders, traffic);
     }
 
-    #assessDamage(roadBorders) {
-        return roadBorders.some(border => polysIntersect(this.polygon, border));
+    #assessDamage(roadBorders, traffic) {
+        const hitBorder = roadBorders.some(border => polysIntersect(this.polygon, border));
+        const hitTraffic = traffic.some(car => polysIntersect(this.polygon, car.polygon));
+
+        return hitBorder || hitTraffic;
     }
 
     #createPolygon() {
@@ -62,8 +69,8 @@ class Car {
         this.y -= Math.cos(this.angle) * this.speed;
     }
 
-    draw(ctx) {
-        ctx.fillStyle = this.damaged ? "gray" : "black";
+    draw(ctx, color) {
+        ctx.fillStyle = this.damaged ? "gray" : color;
 
         ctx.beginPath();
         this.polygon.forEach((point, index) => {
@@ -71,6 +78,6 @@ class Car {
         });
         ctx.fill();
 
-        this.sensor.draw(ctx);
+        this.sensor?.draw(ctx);
     }
 }

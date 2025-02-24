@@ -9,15 +9,27 @@ class Sensor {
         this.readings = []; // if there is a border nearby, how far is it?
     }
 
-    update(roadBorders) {
+    update(roadBorders, traffic) {
         this.#castRays();
-        this.readings = this.rays.map(ray => this.#getReading(ray, roadBorders));
+        this.readings = this.rays.map(ray => this.#getReading(ray, roadBorders, traffic));
     }
     
-    #getReading(ray, roadBorders) {
-        const touches = roadBorders
-            .map(border => getIntersection(ray[0], ray[1], border[0], border[1]))
-            .filter(Boolean);
+    #getReading(ray, roadBorders, traffic) {
+        const touches = [];
+
+        // Check intersections with road borders
+        roadBorders.forEach(border => {
+            const touch = getIntersection(ray[0], ray[1], border[0], border[1]);
+            if (touch) touches.push(touch);
+        });
+
+        // Check intersections with traffic polygons
+        traffic.forEach(car => {
+            car.polygon.forEach((point, j, poly) => {
+                const value = getIntersection(ray[0], ray[1], point, poly[(j + 1) % poly.length]);
+                if (value) touches.push(value);
+            });
+        });
     
         if (touches.length === 0) return null;
     
